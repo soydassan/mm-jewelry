@@ -45,18 +45,18 @@ function render(d){
   document.querySelector('#products').innerHTML=products.length?products.map(p=>{
     const imgs=Array.isArray(p.image_urls)?p.image_urls:[];
     const image=imgs[0];
-    const stock=p.stock>0?'Disponible':'Consultar disponibilidad';
+    const inStock=Number(p.stock||0)>0; const stock=inStock?'Disponible':'Sin stock';
     const brand=p.brand||p.category||'M&M';
     return `<article class="product-card">
       <a class="product-card-link" href="producto.html?id=${encodeURIComponent(p.id)}" aria-label="Ver ${esc(p.name)}">
         <div class="product-photo">${image?`<img src="${esc(image)}" alt="${esc(p.name)}">`:`<div class="product-empty-photo"><span>${esc(brand)}</span></div>`}</div>
         <div class="product-info"><span class="muted">${esc(brand)}</span><h3>${esc(p.name)}</h3><p>${esc(p.description||'')}</p><div class="product-meta"><strong class="price">${money(p.display_price)}</strong><span>${esc(stock)}</span></div></div>
       </a>
-      <div class="product-card-action"><a class="product-consult" href="${wa(phone,`Hola, quiero consultar por ${p.name}.`)}" target="_blank" rel="noopener">Consultar por WhatsApp →</a><a class="product-view" href="producto.html?id=${encodeURIComponent(p.id)}">Abrir ficha →</a><button class="product-add" data-product-id="${esc(p.id)}">Agregar al carrito</button></div>
+      <div class="product-card-action"><a class="product-consult" href="${wa(phone,`Hola, quiero consultar por ${p.name}.`)}" target="_blank" rel="noopener">Consultar por WhatsApp →</a><a class="product-view" href="producto.html?id=${encodeURIComponent(p.id)}">Abrir ficha →</a><button class="product-add" data-product-id="${esc(p.id)}" ${inStock?'':'disabled aria-disabled="true"'}>${inStock?'Agregar al carrito':'Sin stock'}</button></div>
     </article>`;
   }).join(''):`<div class="empty-catalog"><span>CATÁLOGO</span><h3>Estamos preparando nuestras piezas.</h3><p>Pronto vas a poder ver los productos disponibles.</p></div>`;
 
   document.querySelector('#brandRail').innerHTML=d.brands.map(b=>`<span class="brand-pill ${b.featured?'featured':''}">${esc(b.name)}</span>`).join('');
-  import('./cart.js').then(({addToCart,updateCartCount})=>{ document.querySelectorAll('.product-add').forEach(btn=>btn.addEventListener('click',()=>{const p=products.find(x=>x.id===btn.dataset.productId); if(!p)return; addToCart(p); btn.textContent='Agregado ✓'; setTimeout(()=>btn.textContent='Agregar al carrito',1200); })); updateCartCount(); });
+  import('./cart.js').then(({addToCart,updateCartCount})=>{ document.querySelectorAll('.product-add').forEach(btn=>btn.addEventListener('click',()=>{const p=products.find(x=>x.id===btn.dataset.productId); if(!p || Number(p.stock||0)<=0)return; addToCart(p); btn.textContent='Agregado ✓'; setTimeout(()=>btn.textContent='Agregar al carrito',1200); })); updateCartCount(); });
 }
 load().then(render).catch(err=>{console.error(err);render({settings:FALLBACK,categories:[],brands:[],products:[]});});

@@ -2,6 +2,7 @@ const KEY='mmj_cart_v1';
 export function getCart(){try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch{return[]}}
 export function saveCart(c){localStorage.setItem(KEY,JSON.stringify(c));updateCartCount();}
 export function addToCart(product){
+  if(Number(product.stock||0)<=0)return getCart();
   const cart=getCart();
   const i=cart.findIndex(x=>x.id===product.id);
   if(i>=0) cart[i].qty=Math.min((cart[i].qty||1)+1, Math.max(1, Number(product.stock)||99));
