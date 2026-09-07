@@ -9,12 +9,12 @@
   <link rel="icon" type="image/svg+xml" href="assets/mm-logo.svg" />
   <link rel="stylesheet" href="styles.css" />
   <style>
-    .product-detail{display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:start;padding:56px 0 90px}
+    .product-detail{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(360px,.88fr);gap:54px;align-items:start;padding:42px 0 86px}
     .gallery{position:sticky;top:24px}
-    .gallery-main{background:#f5f6f3;border:1px solid var(--line);border-radius:28px;aspect-ratio:1/1;display:grid;place-items:center;overflow:hidden}
-    .gallery-main img{width:100%;height:100%;object-fit:contain}
+    .gallery-main{background:#f7f8f5;border:1px solid var(--line);border-radius:26px;min-height:520px;max-height:690px;height:min(690px,68vh);display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .gallery-main img{width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;padding:24px}
     .gallery-empty{color:#637067}
-    .thumbs{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
+    .thumbs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px}
     .thumb{border:1px solid var(--line);border-radius:13px;background:#fff;aspect-ratio:1;overflow:hidden;cursor:pointer;padding:0}
     .thumb.active{outline:2px solid #17382b}
     .thumb img{width:100%;height:100%;object-fit:cover}
@@ -31,21 +31,22 @@
     .detail-note strong{display:block;color:#1a201d;margin-bottom:5px}
     .not-found{padding:120px 0;text-align:center}
     .gallery-main{position:relative;cursor:zoom-in;background:#fff}
-    .gallery-main::after{content:'⌕  Ampliar';position:absolute;right:16px;bottom:16px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.94);font-size:12px;color:#3f4843;pointer-events:none}
+    .gallery-main::after{content:'⌕  Ver en detalle';position:absolute;right:16px;bottom:16px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.96);font-size:12px;color:#3f4843;pointer-events:none}
     .gallery-main img{transition:transform .25s ease}
     .thumb{background:#fff}
     .thumb img{object-fit:contain;padding:4px}
-    .zoom-modal{position:fixed;inset:0;background:rgba(13,18,15,.86);z-index:999;display:none;align-items:center;justify-content:center;padding:28px}
+    .zoom-modal{position:fixed;inset:0;background:rgba(13,18,15,.9);z-index:999;display:none;align-items:center;justify-content:center;padding:22px}
     .zoom-modal.open{display:flex}
-    .zoom-shell{width:min(1180px,94vw);height:min(88vh,900px);position:relative;display:grid;grid-template-columns:1fr;place-items:center}
-    .zoom-image-wrap{width:100%;height:100%;display:grid;place-items:center;overflow:hidden;background:#fff;border-radius:18px;position:relative}
-    .zoom-image{max-width:92%;max-height:92%;object-fit:contain;transform-origin:center;user-select:none;cursor:grab;touch-action:none}
+    .zoom-shell{width:min(1100px,94vw);height:min(86vh,860px);position:relative;display:grid;place-items:center}
+    .zoom-image-wrap{width:min(100%,1000px);height:min(100%,820px);display:grid;place-items:center;overflow:hidden;background:#fff;border-radius:18px;position:relative;box-shadow:0 20px 80px rgba(0,0,0,.28)}
+    .zoom-image{max-width:82%;max-height:82%;object-fit:contain;transform-origin:center;user-select:none;cursor:grab;touch-action:none}
     .zoom-image.dragging{cursor:grabbing}
     .zoom-toolbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:2}
     .zoom-btn,.zoom-close{border:1px solid rgba(255,255,255,.25);background:rgba(17,21,18,.88);color:#fff;border-radius:999px;padding:9px 12px;font-size:14px;cursor:pointer}
     .zoom-close{padding:9px 13px}
     .zoom-hint{position:absolute;left:16px;bottom:16px;padding:8px 11px;border-radius:999px;background:rgba(17,21,18,.75);color:#fff;font-size:12px}
-    @media(max-width:900px){.product-detail{grid-template-columns:1fr;gap:35px}.gallery{position:static}.detail-title{font-size:52px}}
+    @media(max-width:900px){.product-detail{grid-template-columns:1fr;gap:35px}.gallery{position:static}.gallery-main{height:min(72vh,620px);min-height:420px}.detail-title{font-size:52px}}
+    @media(max-width:560px){.gallery-main{height:62vh;min-height:360px;border-radius:20px}.gallery-main img{padding:14px}.zoom-shell{height:84vh}.zoom-image{max-width:92%;max-height:84%}}
   </style>
 </head>
 <body>
@@ -99,7 +100,7 @@
       if(!p){root.innerHTML=`<section class="not-found"><p class="eyebrow">M&M JEWELRY</p><h1>Producto no disponible</h1><p>El producto que buscás ya no está publicado.</p><a class="button button-dark" href="index.html#catalogo">Volver al catálogo</a></section>`;return;}
       const imgs=Array.isArray(p.image_urls)?p.image_urls.filter(Boolean):[];
       const main=imgs[0]||'';
-      root.innerHTML=`<a class="back-link" href="index.html#catalogo">← Volver al catálogo</a><section class="product-detail"><div class="gallery"><div class="gallery-main" id="galleryMain">${main?`<img src="${esc(main)}" alt="${esc(p.name)}">`:'<div class="gallery-empty">Sin fotos disponibles</div>'}</div><div class="thumbs" id="thumbs">${imgs.map((u,i)=>`<button class="thumb ${i===0?'active':''}" data-src="${esc(u)}" aria-label="Ver foto ${i+1}"><img src="${esc(u)}" alt="${esc(p.name)} ${i+1}"></button>`).join('')}</div></div><div class="detail-copy"><span class="detail-brand">${esc(p.brand||p.category||'M&M')}</span><h1 class="detail-title">${esc(p.name)}</h1><div class="detail-description">${esc(p.description||'')}</div><div class="detail-price">${money(p.display_price)}</div><div class="detail-stock">${p.stock>0?'Disponible':'Consultar disponibilidad'}</div><div class="detail-actions"><a class="button button-dark" href="${wa(phone,`Hola, quiero consultar por ${p.name}.`)}" target="_blank" rel="noopener">Consultar por WhatsApp</a><a class="button button-outline" href="index.html#catalogo">Seguir viendo productos</a></div><div class="detail-note"><div><strong>Atención personalizada</strong>Te ayudamos por WhatsApp con disponibilidad y medios de entrega.</div><div><strong>Precio en pesos</strong>El precio mostrado es el vigente en la tienda online.</div></div></div></section>`;
+      root.innerHTML=`<a class="back-link" href="index.html#catalogo">← Volver al catálogo</a><section class="product-detail"><div class="gallery"><div class="gallery-main" id="galleryMain" tabindex="0" role="button" aria-label="Ampliar imagen del producto">${main?`<img src="${esc(main)}" alt="${esc(p.name)}">`:'<div class="gallery-empty">Sin fotos disponibles</div>'}</div><div class="thumbs" id="thumbs">${imgs.map((u,i)=>`<button class="thumb ${i===0?'active':''}" data-src="${esc(u)}" aria-label="Ver foto ${i+1}"><img src="${esc(u)}" alt="${esc(p.name)} ${i+1}"></button>`).join('')}</div></div><div class="detail-copy"><span class="detail-brand">${esc(p.brand||p.category||'M&M')}</span><h1 class="detail-title">${esc(p.name)}</h1><div class="detail-description">${esc(p.description||'')}</div><div class="detail-price">${money(p.display_price)}</div><div class="detail-stock">${p.stock>0?'Disponible':'Consultar disponibilidad'}</div><div class="detail-actions"><a class="button button-dark" href="${wa(phone,`Hola, quiero consultar por ${p.name}.`)}" target="_blank" rel="noopener">Consultar por WhatsApp</a><a class="button button-outline" href="index.html#catalogo">Seguir viendo productos</a></div><div class="detail-note"><div><strong>Atención personalizada</strong>Te ayudamos por WhatsApp con disponibilidad y medios de entrega.</div><div><strong>Precio en pesos</strong>El precio mostrado es el vigente en la tienda online.</div></div></div></section>`;
       const galleryMain=document.querySelector('#galleryMain');
       const modal=document.querySelector('#zoomModal');
       const zoomImage=document.querySelector('#zoomImage');
@@ -107,8 +108,10 @@
       const openZoom=(src)=>{zoomImage.src=src;zoomImage.alt=p.name;zoom=1;panX=0;panY=0;applyZoom();modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'};
       const closeZoom=()=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow=''};
       const applyZoom=()=>{zoomImage.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;};
-      document.querySelectorAll('.thumb').forEach(btn=>btn.addEventListener('click',()=>{galleryMain.innerHTML=`<img src="${btn.dataset.src}" alt="${esc(p.name)}">`;document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('active'));btn.classList.add('active');galleryMain.querySelector('img').addEventListener('click',()=>openZoom(btn.dataset.src));}));
-      if(main){galleryMain.querySelector('img').addEventListener('click',()=>openZoom(main));}
+      document.querySelectorAll('.thumb').forEach(btn=>btn.addEventListener('click',()=>{const src=btn.dataset.src;galleryMain.innerHTML=`<img src="${esc(src)}" alt="${esc(p.name)}">`;document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('active'));btn.classList.add('active');}));
+      galleryMain.addEventListener('click',()=>{const src=galleryMain.querySelector('img')?.src;if(src) openZoom(src);});
+      galleryMain.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();const src=galleryMain.querySelector('img')?.src;if(src) openZoom(src);}});
+      
       document.querySelector('#zoomClose').addEventListener('click',closeZoom);
       modal.addEventListener('click',e=>{if(e.target===modal)closeZoom()});
       document.querySelector('#zoomIn').addEventListener('click',()=>{zoom=Math.min(4,zoom+0.25);applyZoom()});
