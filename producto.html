@@ -30,6 +30,21 @@
     .detail-note div{font-size:13px;color:#667069}
     .detail-note strong{display:block;color:#1a201d;margin-bottom:5px}
     .not-found{padding:120px 0;text-align:center}
+    .gallery-main{position:relative;cursor:zoom-in;background:#fff}
+    .gallery-main::after{content:'⌕  Ampliar';position:absolute;right:16px;bottom:16px;padding:8px 11px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.94);font-size:12px;color:#3f4843;pointer-events:none}
+    .gallery-main img{transition:transform .25s ease}
+    .thumb{background:#fff}
+    .thumb img{object-fit:contain;padding:4px}
+    .zoom-modal{position:fixed;inset:0;background:rgba(13,18,15,.86);z-index:999;display:none;align-items:center;justify-content:center;padding:28px}
+    .zoom-modal.open{display:flex}
+    .zoom-shell{width:min(1180px,94vw);height:min(88vh,900px);position:relative;display:grid;grid-template-columns:1fr;place-items:center}
+    .zoom-image-wrap{width:100%;height:100%;display:grid;place-items:center;overflow:hidden;background:#fff;border-radius:18px;position:relative}
+    .zoom-image{max-width:92%;max-height:92%;object-fit:contain;transform-origin:center;user-select:none;cursor:grab;touch-action:none}
+    .zoom-image.dragging{cursor:grabbing}
+    .zoom-toolbar{position:absolute;top:14px;right:14px;display:flex;gap:8px;z-index:2}
+    .zoom-btn,.zoom-close{border:1px solid rgba(255,255,255,.25);background:rgba(17,21,18,.88);color:#fff;border-radius:999px;padding:9px 12px;font-size:14px;cursor:pointer}
+    .zoom-close{padding:9px 13px}
+    .zoom-hint{position:absolute;left:16px;bottom:16px;padding:8px 11px;border-radius:999px;background:rgba(17,21,18,.75);color:#fff;font-size:12px}
     @media(max-width:900px){.product-detail{grid-template-columns:1fr;gap:35px}.gallery{position:static}.detail-title{font-size:52px}}
   </style>
 </head>
@@ -45,7 +60,21 @@
     <div class="container" id="detailRoot"></div>
   </main>
 
-  <footer class="footer"><div><strong>M&M Jewelry</strong><span>Montero & Montero · Since 1990</span></div><div class="footer-links"><a href="index.html#colecciones">Colecciones</a><a href="index.html#marcas">Marcas</a><a href="index.html#contacto">Contacto</a></div><div class="footer-note">© M&M Jewelry</div></footer>
+\n  <div class="zoom-modal" id="zoomModal" aria-hidden="true">
+    <div class="zoom-shell">
+      <div class="zoom-image-wrap" id="zoomWrap">
+        <div class="zoom-toolbar">
+          <button class="zoom-btn" id="zoomOut" type="button" aria-label="Alejar">−</button>
+          <button class="zoom-btn" id="zoomReset" type="button">100%</button>
+          <button class="zoom-btn" id="zoomIn" type="button" aria-label="Acercar">+</button>
+          <button class="zoom-close" id="zoomClose" type="button" aria-label="Cerrar">✕</button>
+        </div>
+        <img class="zoom-image" id="zoomImage" src="" alt="" draggable="false">
+        <div class="zoom-hint">Deslizá para explorar el detalle · doble clic para acercar</div>
+      </div>
+    </div>
+  </div>
+\n  <footer class="footer"><div><strong>M&M Jewelry</strong><span>Montero & Montero · Since 1990</span></div><div class="footer-links"><a href="index.html#colecciones">Colecciones</a><a href="index.html#marcas">Marcas</a><a href="index.html#contacto">Contacto</a></div><div class="footer-note">© M&M Jewelry</div></footer>
 
   <script type="module">
     import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
@@ -71,7 +100,26 @@
       const imgs=Array.isArray(p.image_urls)?p.image_urls.filter(Boolean):[];
       const main=imgs[0]||'';
       root.innerHTML=`<a class="back-link" href="index.html#catalogo">← Volver al catálogo</a><section class="product-detail"><div class="gallery"><div class="gallery-main" id="galleryMain">${main?`<img src="${esc(main)}" alt="${esc(p.name)}">`:'<div class="gallery-empty">Sin fotos disponibles</div>'}</div><div class="thumbs" id="thumbs">${imgs.map((u,i)=>`<button class="thumb ${i===0?'active':''}" data-src="${esc(u)}" aria-label="Ver foto ${i+1}"><img src="${esc(u)}" alt="${esc(p.name)} ${i+1}"></button>`).join('')}</div></div><div class="detail-copy"><span class="detail-brand">${esc(p.brand||p.category||'M&M')}</span><h1 class="detail-title">${esc(p.name)}</h1><div class="detail-description">${esc(p.description||'')}</div><div class="detail-price">${money(p.display_price)}</div><div class="detail-stock">${p.stock>0?'Disponible':'Consultar disponibilidad'}</div><div class="detail-actions"><a class="button button-dark" href="${wa(phone,`Hola, quiero consultar por ${p.name}.`)}" target="_blank" rel="noopener">Consultar por WhatsApp</a><a class="button button-outline" href="index.html#catalogo">Seguir viendo productos</a></div><div class="detail-note"><div><strong>Atención personalizada</strong>Te ayudamos por WhatsApp con disponibilidad y medios de entrega.</div><div><strong>Precio en pesos</strong>El precio mostrado es el vigente en la tienda online.</div></div></div></section>`;
-      document.querySelectorAll('.thumb').forEach(btn=>btn.addEventListener('click',()=>{document.querySelector('#galleryMain').innerHTML=`<img src="${btn.dataset.src}" alt="${esc(p.name)}">`;document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('active'));btn.classList.add('active')}));
+      const galleryMain=document.querySelector('#galleryMain');
+      const modal=document.querySelector('#zoomModal');
+      const zoomImage=document.querySelector('#zoomImage');
+      let zoom=1, panX=0, panY=0, dragging=false, sx=0, sy=0;
+      const openZoom=(src)=>{zoomImage.src=src;zoomImage.alt=p.name;zoom=1;panX=0;panY=0;applyZoom();modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden'};
+      const closeZoom=()=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.style.overflow=''};
+      const applyZoom=()=>{zoomImage.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;};
+      document.querySelectorAll('.thumb').forEach(btn=>btn.addEventListener('click',()=>{galleryMain.innerHTML=`<img src="${btn.dataset.src}" alt="${esc(p.name)}">`;document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('active'));btn.classList.add('active');galleryMain.querySelector('img').addEventListener('click',()=>openZoom(btn.dataset.src));}));
+      if(main){galleryMain.querySelector('img').addEventListener('click',()=>openZoom(main));}
+      document.querySelector('#zoomClose').addEventListener('click',closeZoom);
+      modal.addEventListener('click',e=>{if(e.target===modal)closeZoom()});
+      document.querySelector('#zoomIn').addEventListener('click',()=>{zoom=Math.min(4,zoom+0.25);applyZoom()});
+      document.querySelector('#zoomOut').addEventListener('click',()=>{zoom=Math.max(1,zoom-0.25);if(zoom===1){panX=0;panY=0}applyZoom()});
+      document.querySelector('#zoomReset').addEventListener('click',()=>{zoom=1;panX=0;panY=0;applyZoom()});
+      zoomImage.addEventListener('dblclick',()=>{zoom=zoom===1?2:1;if(zoom===1){panX=0;panY=0}applyZoom()});
+      zoomImage.addEventListener('mousedown',e=>{dragging=true;zoomImage.classList.add('dragging');sx=e.clientX-panX;sy=e.clientY-panY});
+      window.addEventListener('mousemove',e=>{if(!dragging)return;panX=e.clientX-sx;panY=e.clientY-sy;applyZoom()});
+      window.addEventListener('mouseup',()=>{dragging=false;zoomImage.classList.remove('dragging')});
+      zoomImage.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(1,Math.min(4,zoom+(e.deltaY<0?0.2:-0.2)));if(zoom===1){panX=0;panY=0}applyZoom()},{passive:false});
+      window.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))closeZoom()});
     }
     load().then(render).catch(e=>{console.error(e);document.querySelector('#detailRoot').innerHTML='<section class="not-found"><h1>No pudimos cargar este producto.</h1><p>Probá nuevamente.</p></section>'});
   </script>
