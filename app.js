@@ -48,8 +48,11 @@ function render(d){
     const stock=p.stock>0?'Disponible':'Consultar disponibilidad';
     const brand=p.brand||p.category||'M&M';
     return `<article class="product-card">
-      <div class="product-photo">${image?`<img src="${esc(image)}" alt="${esc(p.name)}">`:`<div class="product-empty-photo"><span>${esc(brand)}</span></div>`}</div>
-      <div class="product-info"><span class="muted">${esc(brand)}</span><h3>${esc(p.name)}</h3><p>${esc(p.description||'')}</p><div class="product-meta"><strong class="price">${money(p.display_price)}</strong><span>${esc(stock)}</span></div><a href="${wa(phone,`Hola, quiero consultar por ${p.name}.`)}" target="_blank" rel="noopener">Consultar →</a></div>
+      <a class="product-card-link" href="producto.html?id=${encodeURIComponent(p.id)}" aria-label="Ver ${esc(p.name)}">
+        <div class="product-photo">${image?`<img src="${esc(image)}" alt="${esc(p.name)}">`:`<div class="product-empty-photo"><span>${esc(brand)}</span></div>`}</div>
+        <div class="product-info"><span class="muted">${esc(brand)}</span><h3>${esc(p.name)}</h3><p>${esc(p.description||'')}</p><div class="product-meta"><strong class="price">${money(p.display_price)}</strong><span>${esc(stock)}</span></div></div>
+      </a>
+      <div class="product-card-action"><a href="${wa(phone,`Hola, quiero consultar por ${p.name}.`)}" target="_blank" rel="noopener">Consultar →</a><a href="producto.html?id=${encodeURIComponent(p.id)}">Ver producto</a></div>
     </article>`;
   }).join(''):`<div class="empty-catalog"><span>CATÁLOGO</span><h3>Estamos preparando nuestras piezas.</h3><p>Pronto vas a poder ver los productos disponibles.</p></div>`;
 
