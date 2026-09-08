@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Producto M&M Jewelry" />
+  <meta name="description" id="metaDescription" content="Producto M&M Jewelry" /><link rel="canonical" id="canonicalLink" href="https://soydassan.github.io/mm-jewelry/producto.html" />
   <meta name="theme-color" content="#17382b" />
   <title>M&M Jewelry | Producto</title>
   <link rel="icon" type="image/svg+xml" href="assets/mm-logo.svg" />
@@ -97,7 +97,7 @@
     function render({p,s}){
       const root=document.querySelector('#detailRoot'); const phone=s.whatsapp||'5491133218175';
       document.querySelector('#headerWhatsapp').href=wa(phone,'Hola, quiero consultar por un producto de M&M Jewelry.');
-      document.title=p?`${p.name} | M&M Jewelry`:'Producto | M&M Jewelry';
+      document.title=p?`${p.name} | M&M Jewelry`:'Producto | M&M Jewelry'; const meta=document.querySelector('#metaDescription'); if(meta){meta.content=(p?.description||`Comprar ${p?.name||'producto'} en M&M Jewelry. Consultá disponibilidad y entrega.`).replace(/\s+/g,' ').slice(0,155);} const canon=document.querySelector('#canonicalLink'); if(canon) canon.href=location.href.split('&')[0]; let oldLd=document.querySelector('#productJsonLd'); if(oldLd) oldLd.remove(); if(p){const ld=document.createElement('script');ld.type='application/ld+json';ld.id='productJsonLd';ld.textContent=JSON.stringify({'@context':'https://schema.org','@type':'Product',name:p.name,description:p.description||'',brand:p.brand?{'@type':'Brand',name:p.brand}:undefined,image:(Array.isArray(p.image_urls)?p.image_urls:[]),offers:{'@type':'Offer',price:Number(p.display_price||0),priceCurrency:'ARS',availability:Number(p.available_stock??p.stock??0)>0?'https://schema.org/InStock':'https://schema.org/OutOfStock',url:location.href}});document.head.appendChild(ld);}
       if(!p){root.innerHTML=`<section class="not-found"><p class="eyebrow">M&M JEWELRY</p><h1>Producto no disponible</h1><p>El producto que buscás ya no está publicado.</p><a class="button button-dark" href="index.html#catalogo">Volver al catálogo</a></section>`;return;}
       const imgs=Array.isArray(p.image_urls)?p.image_urls.filter(Boolean):[];
       const main=imgs[0]||'';
