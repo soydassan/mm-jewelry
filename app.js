@@ -19,7 +19,7 @@ async function load(){
     sb.from('site_settings').select('*'),
     sb.from('categories').select('*').order('sort_order'),
     sb.from('brands').select('*').eq('active',true).order('sort_order'),
-    sb.from('products').select('id,name,brand,category,description,stock,display_price,image_urls,featured').eq('published',true).order('featured',{ascending:false}).order('sort_order')
+    sb.rpc('get_public_products')
   ]);
   const sm = Object.fromEntries((settings||[]).map(r=>[r.key,r.value]));
   return { settings:{...FALLBACK,...sm}, categories:cats||[], brands:brands||[], products:products||[] };
@@ -45,7 +45,7 @@ function render(d){
   document.querySelector('#products').innerHTML=products.length?products.map(p=>{
     const imgs=Array.isArray(p.image_urls)?p.image_urls:[];
     const image=imgs[0];
-    const inStock=Number(p.stock||0)>0; const stock=inStock?'Disponible':'Sin stock';
+    const available=Number(p.available_stock ?? p.stock ?? 0); const inStock=available>0; const stock=inStock?'Disponible':'Sin stock';
     const brand=p.brand||p.category||'M&M';
     return `<article class="product-card">
       <a class="product-card-link" href="producto.html?id=${encodeURIComponent(p.id)}" aria-label="Ver ${esc(p.name)}">
@@ -57,6 +57,6 @@ function render(d){
   }).join(''):`<div class="empty-catalog"><span>CATÁLOGO</span><h3>Estamos preparando nuestras piezas.</h3><p>Pronto vas a poder ver los productos disponibles.</p></div>`;
 
   document.querySelector('#brandRail').innerHTML=d.brands.map(b=>`<span class="brand-pill ${b.featured?'featured':''}">${esc(b.name)}</span>`).join('');
-  import('./cart.js').then(({addToCart,updateCartCount})=>{ document.querySelectorAll('.product-add').forEach(btn=>btn.addEventListener('click',()=>{const p=products.find(x=>x.id===btn.dataset.productId); if(!p || Number(p.stock||0)<=0)return; addToCart(p); btn.textContent='Agregado ✓'; setTimeout(()=>btn.textContent='Agregar al carrito',1200); })); updateCartCount(); });
+  import('./cart.js').then(({addToCart,updateCartCount})=>{ document.querySelectorAll('.product-add').forEach(btn=>btn.addEventListener('click',()=>{const p=products.find(x=>x.id===btn.dataset.productId); if(!p || Number(p.available_stock ?? p.stock ?? 0)<=0)return; addToCart({...p,stock:Number(p.available_stock ?? p.stock ?? 0)}); btn.textContent='Agregado ✓'; setTimeout(()=>btn.textContent='Agregar al carrito',1200); })); updateCartCount(); });
 }
 load().then(render).catch(err=>{console.error(err);render({settings:FALLBACK,categories:[],brands:[],products:[]});});
